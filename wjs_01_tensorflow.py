@@ -71,14 +71,15 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # 变量OP
 # 变量能持久化保持，普通张量op不可以
 # 当定义一个变量op时，一定要在会话中去运行初始化
+# name参数：在tensorboard使用的时候显示名字，可以让相同op名字的进行区分
 
-a = tf.constant(3.0)
+a = tf.constant(3.0, name="a")
 
-b = tf.constant(3.0)
+b = tf.constant(4.0, name="b")
 
-c = tf.add(a, b)
+c = tf.add(a, b, name="add")
 
-var = tf.Variable(tf.random_normal([2, 3], mean=0.0, stddev=1.0))
+var = tf.Variable(tf.random_normal([2, 3], mean=0.0, stddev=1.0), name="variable")
 print(a, var)
 
 # 必须做一个OP初始化显示
