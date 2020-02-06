@@ -51,22 +51,44 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # 对于静态形状来说，一旦张量形状固定了，不能再次设置静态形状
 # 对于动态形状可以去创建一个新的张量,注意原数数量要匹配
 
-plt = tf.placeholder(tf.float32, [None, 2])
+# plt = tf.placeholder(tf.float32, [None, 2])
+#
+# print(plt, "< 1")
+#
+# plt.set_shape([3, 2])
+#
+# print(plt, "< 2")
+#
+# # plt.set_shape([2, 2])  # 不能再次修改了
+#
+# plt1 = tf.reshape(plt, [2, 3, 1])
+# print(plt1, "< 3")
+#
+# with tf.Session() as sess:
+#     pass
 
-print(plt, "< 1")
 
-plt.set_shape([3, 2])
+# 变量OP
+# 变量能持久化保持，普通张量op不可以
+# 当定义一个变量op时，一定要在会话中去运行初始化
 
-print(plt, "< 2")
+a = tf.constant(3.0)
 
-# plt.set_shape([2, 2])  # 不能再次修改了
+b = tf.constant(3.0)
 
-plt1 = tf.reshape(plt, [2, 3, 1])
-print(plt1, "< 3")
+c = tf.add(a, b)
+
+var = tf.Variable(tf.random_normal([2, 3], mean=0.0, stddev=1.0))
+print(a, var)
+
+# 必须做一个OP初始化显示
+init_op = tf.global_variables_initializer()
 
 with tf.Session() as sess:
-    pass
+    # 必须运行初始化op
+    sess.run(init_op)
 
-
-
+    # 把程序的图结构写入时间文件，graph：把指定的图写进时间文件中
+    filewriter = tf.summary.FileWriter("./summary/test/", graph=sess.graph)
+    print(sess.run([c, var]))
 
