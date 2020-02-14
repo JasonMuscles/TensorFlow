@@ -98,15 +98,15 @@ def myregression():
     实现一个线性回归预测
     """
     # 1.准备数据，x特征值【100，10】y目标值【100】
-    x = tf.random_normal([100, 1], mean=1.75, stddev=0.5, name="X_data")
+    x = tf.random.normal([100, 1], mean=1.75, stddev=0.5, name="X_data")
 
     # 矩阵相乘必须是二维的
     y_true = tf.matmul(x, [[0.7]]) + 0.8
 
     # 2.建立线性回归模型 1个特征，1个权重，1个偏值 y = x w + b
     # 随机给一个权重和偏值的值，让他去计算损失，然后在当前状态下优化
-    # 用变量定义才能优化
-    weight = tf.Variable(tf.random_normal([1, 1], mean=0.0, stddev=1.0, name="w"))
+    # 用变量定义才能优化（即：Variable，或者通过:trainable=False 更改）
+    weight = tf.Variable(tf.random.normal([1, 1], mean=0.0, stddev=1.0, name="w"))
 
     bias = tf.Variable(0.0, name="b")
 
@@ -116,13 +116,13 @@ def myregression():
     loss = tf.reduce_mean(tf.square(y_true - y_predict))
 
     # 4.梯度下降优化损失 leaning_rate：0 ~ 1,2,3,5,7,10
-    train_op = tf.train.GradientDescentOptimizer(0.1).minimize(loss)
+    train_op = tf.compat.v1.train.GradientDescentOptimizer(0.1).minimize(loss)
 
     # 定义一个初始化变量的op
-    init_op = tf.global_variables_initializer()
+    init_op = tf.compat.v1.global_variables_initializer()
 
     # 通过会话运行程序
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         # 初始化变量
         sess.run(init_op)
 
@@ -130,8 +130,9 @@ def myregression():
         print("随机初始化的参数权重为：%f,偏置为：%f" % (weight.eval(), bias.eval()))
 
         # 循环训练 运行优化
-        for i in range(10):
+        for i in range(1000):
             sess.run(train_op)
+            # tf.compat.v1.summary.FileWriter("./summary/test2/", graph=sess.graph)
             print("第%d次优化 -- 参数权重为：%f,偏置为：%f" % (i, weight.eval(), bias.eval()))
 
     return None
