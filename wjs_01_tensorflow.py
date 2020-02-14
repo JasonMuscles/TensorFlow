@@ -73,23 +73,71 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # 当定义一个变量op时，一定要在会话中去运行初始化
 # name参数：在tensorboard使用的时候显示名字，可以让相同op名字的进行区分
 
-a = tf.constant(3.0, name="a")
+# a = tf.constant(3.0, name="a")
+#
+# b = tf.constant(4.0, name="b")
+#
+# c = tf.add(a, b, name="add")
+#
+# var = tf.Variable(tf.random_normal([2, 3], mean=0.0, stddev=1.0), name="variable")
+# print(a, var)
+#
+# # 必须做一个OP初始化显示
+# init_op = tf.global_variables_initializer()
+#
+# with tf.Session() as sess:
+#     # 必须运行初始化op
+#     sess.run(init_op)
+#
+#     # 把程序的图结构写入时间文件，graph：把指定的图写进时间文件中
+#     filewriter = tf.summary.FileWriter("./summary/test/", graph=sess.graph)
+#     print(sess.run([c, var]))
 
-b = tf.constant(4.0, name="b")
+def myregression():
+    """
+    实现一个线性回归预测
+    """
+    # 1.准备数据，x特征值【100，10】y目标值【100】
+    x = tf.random_normal([100, 1], mean=1.75, stddev=0.5, name="X_data")
 
-c = tf.add(a, b, name="add")
+    # 矩阵相乘必须是二维的
+    y_true = tf.matmul(x, [[0.7]]) + 0.8
 
-var = tf.Variable(tf.random_normal([2, 3], mean=0.0, stddev=1.0), name="variable")
-print(a, var)
+    # 2.建立线性回归模型 1个特征，1个权重，1个偏值 y = x w + b
+    # 随机给一个权重和偏值的值，让他去计算损失，然后在当前状态下优化
+    # 用变量定义才能优化
+    weight = tf.Variable(tf.random_normal([1, 1], mean=0.0, stddev=1.0, name="w"))
 
-# 必须做一个OP初始化显示
-init_op = tf.global_variables_initializer()
+    bias = tf.Variable(0.0, name="b")
 
-with tf.Session() as sess:
-    # 必须运行初始化op
-    sess.run(init_op)
+    y_predict = tf.matmul(x, weight) + bias
 
-    # 把程序的图结构写入时间文件，graph：把指定的图写进时间文件中
-    filewriter = tf.summary.FileWriter("./summary/test/", graph=sess.graph)
-    print(sess.run([c, var]))
+    # 3.建立损失函数，均方误差
+    loss = tf.reduce_mean(tf.square(y_true - y_predict))
+
+    # 4.梯度下降优化损失 leaning_rate：0 ~ 1,2,3,5,7,10
+    train_op = tf.train.GradientDescentOptimizer(0.1).minimize(loss)
+
+    # 定义一个初始化变量的op
+    init_op = tf.global_variables_initializer()
+
+    # 通过会话运行程序
+    with tf.Session() as sess:
+        # 初始化变量
+        sess.run(init_op)
+
+        # 打印随机最先初始化的权重和偏置
+        print("随机初始化的参数权重为：%f,偏置为：%f" % (weight.eval(), bias.eval()))
+
+        # 循环训练 运行优化
+        for i in range(10):
+            sess.run(train_op)
+            print("第%d次优化 -- 参数权重为：%f,偏置为：%f" % (i, weight.eval(), bias.eval()))
+
+    return None
+
+
+if __name__ == '__main__':
+    myregression()
+
 
