@@ -95,45 +95,62 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 def myregression():
     """
-    实现一个线性回归预测
+    定义一个自回归函数
+    @return:
     """
-    # 1.准备数据，x特征值【100，10】y目标值【100】
-    x = tf.random.normal([100, 1], mean=1.75, stddev=0.5, name="X_data")
+    with tf.variable_scope("Data"):
+        # 1.准备数据x为特征数据[100, 1],y目标值
+        x = tf.compat.v1.random_normal([100, 1], mean=1.75, stddev=0.5, name="X_data")
 
-    # 矩阵相乘必须是二维的
-    y_true = tf.matmul(x, [[0.7]]) + 0.8
+        y_true = tf.compat.v1.matmul(x, [[0.7]]) + 0.8
 
-    # 2.建立线性回归模型 1个特征，1个权重，1个偏值 y = x w + b
-    # 随机给一个权重和偏值的值，让他去计算损失，然后在当前状态下优化
-    # 用变量定义才能优化（即：Variable，或者通过:trainable=False 更改）
-    weight = tf.Variable(tf.random.normal([1, 1], mean=0.0, stddev=1.0, name="w"))
+    with tf.variable_scope("Model"):
+        # 2.建立模型 线性回归 1个特征  1个权重  1个偏置 y_predict = x * w + b
+        # 随机一个权重和一个偏置
+        weight = tf.compat.v1.Variable(tf.compat.v1.random_normal([1, 1], mean=0.0, stddev=1.0), name="W_weight")
 
-    bias = tf.Variable(0.0, name="b")
+        bias = tf.compat.v1.Variable(0.0, name="B_bias")
 
-    y_predict = tf.matmul(x, weight) + bias
+        y_predict = tf.compat.v1.matmul(x, weight) + bias
 
-    # 3.建立损失函数，均方误差
-    loss = tf.reduce_mean(tf.square(y_true - y_predict))
+    with tf.variable_scope("Lose"):
+        # 3.求损失率
+        loss = tf.compat.v1.reduce_mean(tf.compat.v1.square(y_true - y_predict))
 
-    # 4.梯度下降优化损失 leaning_rate：0 ~ 1,2,3,5,7,10
-    train_op = tf.compat.v1.train.GradientDescentOptimizer(0.1).minimize(loss)
+    with tf.variable_scope("Optimizer"):
+        # 4.优化损失
+        train_op = tf.compat.v1.train.GradientDescentOptimizer(0.001).minimize(loss)
 
-    # 定义一个初始化变量的op
+    # 一、收集tensor
+    tf.summary.scalar("Losses", loss)
+    tf.summary.histogram("Weights", weight)
+    # tf.summary.histogram("Biases", bias)
+
+    # 二、合并变量写入事件文件
+    merged = tf.summary.merge_all()
+
+
+    # 初始化Variable
     init_op = tf.compat.v1.global_variables_initializer()
 
-    # 通过会话运行程序
+    # 会话开启优化
     with tf.compat.v1.Session() as sess:
-        # 初始化变量
+        # 初始化
         sess.run(init_op)
+        print("W = %f | B = %f" % (weight.eval(), bias.eval()))
 
-        # 打印随机最先初始化的权重和偏置
-        print("随机初始化的参数权重为：%f,偏置为：%f" % (weight.eval(), bias.eval()))
+        # 建立事件文件
+        fileWriter = tf.summary.FileWriter("/Users/jason/PycharmProjects/TensorFlow/summary/test", graph=sess.graph)
 
-        # 循环训练 运行优化
-        for i in range(1000):
+        # 循环优化
+        for i in range(900):
             sess.run(train_op)
-            # tf.compat.v1.summary.FileWriter("./summary/test2/", graph=sess.graph)
-            print("第%d次优化 -- 参数权重为：%f,偏置为：%f" % (i, weight.eval(), bias.eval()))
+
+            # 运行合并的tensor
+            summary = sess.run(merged)
+            fileWriter.add_summary(summary, i)
+
+            print("已优化%d次 --> W = %f | B = %f" % (i, weight.eval(), bias.eval()))
 
     return None
 
