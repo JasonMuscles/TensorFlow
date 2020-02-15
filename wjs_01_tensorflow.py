@@ -98,13 +98,13 @@ def myregression():
     定义一个自回归函数
     @return:
     """
-    with tf.variable_scope("Data"):
+    with tf.compat.v1.variable_scope("Data"):
         # 1.准备数据x为特征数据[100, 1],y目标值
         x = tf.compat.v1.random_normal([100, 1], mean=1.75, stddev=0.5, name="X_data")
 
         y_true = tf.compat.v1.matmul(x, [[0.7]]) + 0.8
 
-    with tf.variable_scope("Model"):
+    with tf.compat.v1.variable_scope("Model"):
         # 2.建立模型 线性回归 1个特征  1个权重  1个偏置 y_predict = x * w + b
         # 随机一个权重和一个偏置
         weight = tf.compat.v1.Variable(tf.compat.v1.random_normal([1, 1], mean=0.0, stddev=1.0), name="W_weight")
@@ -113,25 +113,29 @@ def myregression():
 
         y_predict = tf.compat.v1.matmul(x, weight) + bias
 
-    with tf.variable_scope("Lose"):
+    with tf.compat.v1.variable_scope("Lose"):
         # 3.求损失率
         loss = tf.compat.v1.reduce_mean(tf.compat.v1.square(y_true - y_predict))
 
-    with tf.variable_scope("Optimizer"):
+    with tf.compat.v1.variable_scope("Optimizer"):
         # 4.优化损失
         train_op = tf.compat.v1.train.GradientDescentOptimizer(0.001).minimize(loss)
 
     # 一、收集tensor
-    tf.summary.scalar("Losses", loss)
-    tf.summary.histogram("Weights", weight)
-    # tf.summary.histogram("Biases", bias)
+    tf.compat.v1.summary.scalar("Losses", loss)
+    tf.compat.v1.summary.histogram("Weights", weight)
+    # tf.compat.v1.summary.histogram("Biases", bias)
 
     # 二、合并变量写入事件文件
-    merged = tf.summary.merge_all()
+    merged = tf.compat.v1.summary.merge_all()
 
 
     # 初始化Variable
     init_op = tf.compat.v1.global_variables_initializer()
+
+    # 定义一个保存模型的实例
+    saver = tf.compat.v1.train.Saver()
+
 
     # 会话开启优化
     with tf.compat.v1.Session() as sess:
@@ -140,18 +144,22 @@ def myregression():
         print("W = %f | B = %f" % (weight.eval(), bias.eval()))
 
         # 建立事件文件
-        fileWriter = tf.summary.FileWriter("/Users/jason/PycharmProjects/TensorFlow/summary/test", graph=sess.graph)
+        filewriter = tf.compat.v1.summary.FileWriter("./summary/test/", graph=sess.graph)
 
+        # 加载模型，覆盖当前自定义随机初始值，从上次终止的参数开始
+        if os.path.exists("./summary/ckpt/checkpoint"):
+            saver.restore(sess, "./summary/ckpt/model")
         # 循环优化
         for i in range(900):
             sess.run(train_op)
 
             # 运行合并的tensor
             summary = sess.run(merged)
-            fileWriter.add_summary(summary, i)
+            filewriter.add_summary(summary, i)
 
             print("已优化%d次 --> W = %f | B = %f" % (i, weight.eval(), bias.eval()))
 
+        saver.save(sess, "./summary/ckpt/model")
     return None
 
 
