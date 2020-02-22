@@ -93,6 +93,16 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 #     filewriter = tf.summary.FileWriter("./summary/test/", graph=sess.graph)
 #     print(sess.run([c, var]))
 
+# 定义命令行参数
+# 1.先定义有哪些参数需要在运行时指定
+# 2.程序当中获取定义命令行参数
+
+# 第一个参数：名字、默认值、说明
+# tf.app.flags.DEFINE_integer("max_step", 100, "模型训练的步数")
+# tf.app.flags.DEFINE_string("model_dir", 100, "模型文件的加载路径")
+#
+# FLAGS = tf.app.flags.FLAGS
+
 def myregression():
     """
     定义一个自回归函数
@@ -150,7 +160,7 @@ def myregression():
         if os.path.exists("./summary/ckpt/checkpoint"):
             saver.restore(sess, "./summary/ckpt/model")
         # 循环优化
-        for i in range(900):
+        for i in range(500):
             sess.run(train_op)
 
             # 运行合并的tensor
